@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inspection Déneigement</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 16px 16px 0 0;
+        }
+        .header h1 { font-size: 20px; margin-bottom: 5px; }
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        .header-btn {
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .header-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .info-section {
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .info-field { display: flex; flex-direction: column; }
+        .info-field label {
+            font-size: 12px;
+            color: #6c757d;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        .info-field input {
+            padding: 10px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .items-section {
+            padding: 20px;
+        }
+        .section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #2a5298;
+            margin: 15px 0 10px;
+            text-transform: uppercase;
+        }
+        .item {
+            margin-bottom: 15px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #dee2e6;
+        }
+        .item.ok { border-left-color: #28a745; background: #f0fff4; }
+        .item.issue { border-left-color: #dc3545; background: #fff5f5; }
+        .item-title {
+            font-weight: 500;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        .status-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .status-btn {
+            flex: 1;
+            padding: 8px;
+            border: 2px solid #dee2e6;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .status-btn.ok-btn {
+            border-color: #28a745;
+            color: #28a745;
+        }
+        .status-btn.ok-btn.active {
+            background: #28a745;
+            color: white;
+        }
+        .status-btn.issue-btn {
+            border-color: #dc3545;
+            color: #dc3545;
+        }
+        .status-btn.issue-btn.active {
+            background: #dc3545;
+            color: white;
+        }
+        .item-details {
+            display: none;
+            margin-top: 10px;
+        }
+        .item-details.show { display: block; }
+        .comment-box {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            min-height: 50px;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+        .photo-btn {
+            padding: 8px 15px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .photos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .photo-item {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .photo-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .photo-remove {
+            position: absolute;
+            top: 3px;
+            right: 3px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .summary {
+            padding: 15px 20px;
+            background: #fff3cd;
+            margin: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+        .summary.show { display: block; }
+        .summary-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 10px;
+        }
+        .stat {
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2a5298;
+        }
+        .stat-label {
+            font-size: 11px;
+            color: #6c757d;
+        }
+        .send-section {
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        .send-title {
+            font-size: 16px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 15px;
+            color: #1e3c72;
+        }
+        .send-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .send-btn {
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-send {
+            background: #28a745;
+            color: white;
+        }
+        .btn-reset {
+            background: #6c757d;
+            color: white;
+        }
+        input[type="file"] { display: none; }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            padding: 20px;
+        }
+        .modal.show { display: flex; align-items: center; justify-content: center; }
+        .modal-content {
+            background: white;
+            max-width: 500px;
+            width: 100%;
+            padding: 30px;
+            border-radius: 12px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-icon {
+            font-size: 60px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 15px;
+            color: #28a745;
+        }
+        .modal-text {
+            line-height: 1.6;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .report-preview {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 15px 0;
+            border: 1px solid #dee2e6;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .modal-btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-whatsapp {
+            background: #25D366;
+            color: white;
+        }
+        .btn-email {
+            background: #EA4335;
+            color: white;
+        }
+        .btn-close {
+            background: #667eea;
+            color: white;
+        }
+        
+        .history-section {
+            padding: 20px;
+            background: #f8f9fa;
+            border-top: 2px solid #e9ecef;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .history-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1e3c72;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .history-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .history-item:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateX(5px);
+        }
+        .history-item.has-issues {
+            border-left-color: #dc3545;
+        }
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .history-vehicle {
+            font-weight: 700;
+            color: #2a5298;
+            font-size: 15px;
+        }
+        .history-date {
+            font-size: 12px;
+            color: #6c757d;
+        }
+        .history-info {
+            font-size: 13px;
+            color: #495057;
+            margin-bottom: 5px;
+        }
+        .history-status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+        .history-status.ok {
+            background: #d4edda;
+            color: #155724;
+        }
+        .history-status.issues {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .btn-clear-history {
+            padding: 6px 12px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .empty-history {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Inspection Véhicule Déneigement</h1>
+            <p id="currentDate"></p>
+            <div class="header-buttons">
+                <button class="header-btn" onclick="toggleHistory()">📋 Historique</button>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <div class="info-grid">
+                <div class="info-field">
+                    <label>Numéro véhicule *</label>
+                    <input type="text" id="vehicleNumber" placeholder="SN-001" required>
+                </div>
+                <div class="info-field">
+                    <label>Opérateur *</label>
+                    <input type="text" id="operator" required>
+                </div>
+                <div class="info-field">
+                    <label>Email/Tél superviseur *</label>
+                    <input type="text" id="supervisorContact" placeholder="superviseur@exemple.com" required>
+                </div>
+                <div class="info-field">
+                    <label>Kilométrage</label>
+                    <input type="number" id="mileage">
+                </div>
+                <div class="info-field">
+                    <label>Date *</label>
+                    <input type="date" id="date" required>
+                </div>
+                <div class="info-field">
+                    <label>Heure</label>
+                    <input type="time" id="time">
+                </div>
+            </div>
+        </div>
+
+        <div class="summary" id="summary">
+            <strong>Résumé</strong>
+            <div class="summary-stats">
+                <div class="stat">
+                    <div class="stat-value" id="totalChecked">0</div>
+                    <div class="stat-label">Vérifiés</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="totalOk">0</div>
+                    <div class="stat-label">OK</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="totalIssues">0</div>
+                    <div class="stat-label">Problèmes</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="items-section">
+            <div class="section-title">AVANT DE DÉMARRER</div>
+            
+            <div class="item" data-id="1">
+                <div class="item-title">AUCUNE FUITE (Huile, carburant, hydraulique)</div>
+                <div class="status-buttons">
+                    <button class="status-btn ok-btn" onclick="setStatus(1, 'ok')">✓ OK</button>
+                    <button class="status-btn issue-btn" onclick="setStatus(1, 'issue')">✗ Problème</button>
+                </div>
+                <div class="item-details">
+                    <textarea class="comment-box" placeholder="Commentaires..." data-id="1"></textarea>
+                    <button class="photo-btn" onclick="addPhoto(1)">📷 Photo</button>
+                    <input type="file" id="photo-1" accept="image/*" capture="environment" multiple onchange="handlePhotos(1, this.files)">
+                    <div class="photos-grid" id="photos-1"></div>
+                </div>
+            </div>
+
+            <div class="item" data-id="2">
+                <div class="item-title">PNEUS ET ROUES (État, pression, écrous)</div>
+                <div class="status-buttons">
+                    <button class="status-btn ok-btn" onclick="setStatus(2, 'ok')">✓ OK</button>
+                    <button class="status-btn issue-btn" onclick="setStatus(2, 'issue')">✗ Problème</button>
+                </div>
+                <div class="item-details">
+                    <textarea class="comment-box" placeholder="Commentaires..." data-id="2"></textarea>
+                    <button class="photo-btn" onclick="addPhoto(2)">📷 Photo</button>
+                    <input type="file" id="photo-2" accept="image/*" capture="environment" multiple onchange="handlePhotos(2, this.files)">
+                    <div class="photos-grid" id="photos-2"></div>
+                </div>
+            </div>
+
+            <div class="item" data-id="3">
+                <div class="item-title">ÉCLAIRAGE (Phares, gyrophares, clignotants)</div>
+                <div class="status-buttons">
+                    <button class="status-btn ok-btn" onclick="setStatus(3, 'ok')">✓ OK</button>
+                    <button class="status-btn issue-btn" onclick="setStatus(3, 'issue')">✗ Problème</button>
+                </div>
+                <div class="item-details">
+                    <textarea class="comment-box" placeholder="Commentaires..." data-id="3"></textarea>
+                    <button class="photo-btn" onclick="addPhoto(3)">📷 Photo</button>
+                    <input type="file" id="photo-3" accept="image/*" capture="environment" multiple onchange="handlePhotos(3, this.files)">
+                    <div class="photos-grid" id="photos-3"></div>
+                </div>
+            </div>
+
+            <div class="item" data-id="4">
+                <div class="item-title">VISIBILITÉ (Miroirs, essuie-glaces, lave-glace)</div>
+                <div class="status-buttons">
+                    <button class="status-btn ok-btn" onclick="setStatus(4, 'ok')">✓ OK</button>
+                    <button class="status-btn issue-btn" onclick="setStatus(4, 'issue')">✗ Problème</button>
+                </div>
+                <div class="item-details">
+                    <textarea class="comment-box" placeholder="Commentaires..." data-id="4"></textarea>
+                    <button class="photo-btn" onclick="addPhoto(4)">📷 Photo</button>
+                    <input type="file" id="photo-4" accept="image/*" capture="environment" multiple onchange="handlePhotos(4, this.files)">
+                    <div class="photos-grid" id="photos-4"></div>
+                </div>
+            </div>
+
+            <div class="item" data-id="5">
+                <div class="item-title">ÉQUIPEMENT FIXÉ (Charrue, épandeur)</div>
+                <div class="status-buttons">
+                    <button class="status-btn ok-btn" onclick="setStatus(5, 'ok')">✓ OK</button>
+                    <button class="status-btn issue-btn" onclick="setStatus(5, 'issue')">✗ Problème</button>
+                </div>
+                <div class="item-details">
+                    <textarea class="comment-box" placeholder="Commentaires..." data-id="5"></textarea>
+                    <button class="photo-btn" onclick="addPhoto(5)">📷 Photo</button>
+                    <input type="file" id="photo-5" accept="image/*" capture="environment" multiple onchange="handlePhotos(5, this.files)">
+                    <div class="photos-grid" id="photos-5"></div>
+                </div>
+            </div>
+
+            <div class="item" data-id="6">
+                <div class="item-title">HYDRAULIQUE (Niveau d'huile, pas de fuite)</div>
+                <div class="status-buttons">
+                    <button class="status-btn ok-btn" onclick="setStatus(6, 'ok')">✓ OK</button>
+                    <button class="status-btn issue-btn" onclick="setStatus(6, 'issue')">✗ Problème</button>
+                </div>
+                <div class="item-details">
+                    <textarea class="comment-box" placeholder="Commentaires..." data-id="6"></textarea>
+                    <button class="photo-btn" onclick="addPhoto(6)">📷 Photo</button>
+                    <input type="file" id="photo-6" accept="image/*" capture="environment" multiple onchange="handlePhotos(6, this.files)">
+                    <div class="photos-grid" id="photos-6"></div>
+                </div>
+            </div>
+
+            <div class="item" data-id="7">
+                <div class="item-title">CAPTEURS (Encodeurs Epoke dégagés)</div>
+                <div class="status-buttons">
+                    <button class="status-btn ok-btn" onclick="setStatus(7, 'ok')">✓ OK</button>
+                    <button class="status-btn issue-btn" onclick="setStatus(7, 'issue')">✗ Problème</button>
+                </div>
+                <div class="item-details">
+                    <textarea class="comment-box" placeholder="Commentaires..." data-id="7"></textarea>
+                    <button class="photo-btn" onclick="addPhoto(7)">📷 Photo</button>
+                    <input type="file" id="photo-7" accept="image/*" capture="environment" multiple onchange="handlePhotos(7, this.files)">
+                    <div class="photos-grid" id="photos-7"></div>
+                </div>
+            </div>
+
+            <div class="item" data-id="8">
+                <div class="item-title">LAMES ET AILES (Usure)</div>
+                <div class="status-buttons">
+                    <button class="status-btn ok-btn" onclick="setStatus(8, 'ok')">✓ OK</button>
+                    <button class="status-btn issue-btn" onclick="setStatus(8, 'issue')">✗ Problème</button>
+                </div>
+                <div class="item-details">
+                    <textarea class="comment-box" placeholder="Commentaires..." data-id="8"></textarea>
+                    <button class="photo-btn" onclick="addPhoto(8)">📷 Photo</button>
+                    <input type="file" id="photo-8" accept="image/*" capture="environment" multiple onchange="handlePhotos(8, this.files)">
+                    <div class="photos-grid" id="photos-8"></div>
+                </div>
+            </div>
+
+            <div class="section-title">APRÈS DÉMARRAGE</div>
+
+            <div class="item" data-id="9">
+                <div class="item-title">PRESSION D'AIR (> 100 PSI)</div>
+                <div class="status-buttons">
+                    <button class="status-btn ok-btn" onclick="setStatus(9, 'ok')">✓ OK</button>
+                    <button class="status-btn issue-btn" onclick="setStatus(9, 'issue')">✗ Problème</button>
+                </div>
+                <div class="item-details">
+                    <textarea class="comment-box" placeholder="Commentaires..." data-id="9"></textarea>
+                    <button class="photo-btn" onclick="addPhoto(9)">📷 Photo</button>
+                    <input type="file" id="photo-9" accept="image/*" capture="environment" multiple onchange="handlePhotos(9, this.files)">
+                    <div class="photos-grid" id="photos-9"></div>
+                </div>
+            </div>
+
+            <div class="item" data-id="10">
+                <div class="item-title">MOTEUR (Pression huile, température)</div>
+                <div class="status-buttons">
+                    <button class="status-btn ok-btn" onclick="setStatus(10, 'ok')">✓ OK</button>
+                    <button class="status-btn issue-btn" onclick="setStatus(10, 'issue')">✗ Problème</button>
+                </div>
+                <div class="item-details">
+                    <textarea class="comment-box" placeholder="Commentaires..." data-id="10"></textarea>
+                    <button class="photo-btn" onclick="addPhoto(10)">📷 Photo</button>
+                    <input type="file" id="photo-10" accept="image/*" capture="environment" multiple onchange="handlePhotos(10, this.files)">
+                    <div class="photos-grid" id="photos-10"></div>
+                </div>
+            </div>
+
+            <div class="item" data-id="11">
+                <div class="item-title">TRANSMISSION (D et R sans erreur)</div>
+                <div class="status-buttons">
+                    <button class="status-btn ok-btn" onclick="setStatus(11, 'ok')">✓ OK</button>
+                    <button class="status-btn issue-btn" onclick="setStatus(11, 'issue')">✗ Problème</button>
+                </div>
+                <div class="item-details">
+                    <textarea class="comment-box" placeholder="Commentaires..." data-id="11"></textarea>
+                    <button class="photo-btn" onclick="addPhoto(11)">📷 Photo</button>
+                    <input type="file" id="photo-11" accept="image/*" capture="environment" multiple onchange="handlePhotos(11, this.files)">
+                    <div class="photos-grid" id="photos-11"></div>
+                </div>
+            </div>
+
+            <div class="item" data-id="12">
+                <div class="item-title">FREINS (Test stationnement et basse vitesse)</div>
+                <div class="status-buttons">
+                    <button class="status-btn ok-btn" onclick="setStatus(12, 'ok')">✓ OK</button>
+                    <button class="status-btn issue-btn" onclick="setStatus(12, 'issue')">✗ Problème</button>
+                </div>
+                <div class="item-details">
+                    <textarea class="comment-box" placeholder="Commentaires..." data-id="12"></textarea>
+                    <button class="photo-btn" onclick="addPhoto(12)">📷 Photo</button>
+                    <input type="file" id="photo-12" accept="image/*" capture="environment" multiple onchange="handlePhotos(12, this.files)">
+                    <div class="photos-grid" id="photos-12"></div>
+                </div>
+            </div>
+
+            <div class="item" data-id="13">
+                <div class="item-title">SÉCURITÉ (Chauffage, dégivreur)</div>
+                <div class="status-buttons">
+                    <button class="status-btn ok-btn" onclick="setStatus(13, 'ok')">✓ OK</button>
+                    <button class="status-btn issue-btn" onclick="setStatus(13, 'issue')">✗ Problème</button>
+                </div>
+                <div class="item-details">
+                    <textarea class="comment-box" placeholder="Commentaires..." data-id="13"></textarea>
+                    <button class="photo-btn" onclick="addPhoto(13)">📷 Photo</button>
+                    <input type="file" id="photo-13" accept="image/*" capture="environment" multiple onchange="handlePhotos(13, this.files)">
+                    <div class="photos-grid" id="photos-13"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="send-section">
+            <div class="send-title">📤 Envoyer le rapport</div>
+            <div class="send-buttons">
+                <button class="send-btn btn-send" onclick="prepareReport()">
+                    📋 PRÉPARER L'ENVOI
+                </button>
+                <button class="send-btn btn-reset" onclick="resetForm()">
+                    🔄 Réinitialiser
+                </button>
+            </div>
+        </div>
+
+        <div class="history-section" id="historySection" style="display:none;">
+            <div class="history-title">
+                <span>📋 Historique des inspections</span>
+                <button class="btn-clear-history" onclick="clearHistory()">🗑️ Effacer</button>
+            </div>
+            <div id="historyList"></div>
+        </div>
+    </div>
+
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-icon">✅</div>
+            <div class="modal-title">Rapport copié!</div>
+            <div class="modal-text">
+                Le rapport a été copié automatiquement.<br>
+                <strong>Choisissez comment l'envoyer:</strong>
+            </div>
+            <div class="report-preview" id="reportPreview"></div>
+            <div class="modal-buttons">
+                <button class="modal-btn btn-whatsapp" onclick="sendViaWhatsApp()">📱 WhatsApp</button>
+                <button class="modal-btn btn-email" onclick="sendViaEmail()">📧 Email</button>
+            </div>
+            <button class="modal-btn btn-close" onclick="closeModal()" style="margin-top:10px; width:100%;">Fermer</button>
+        </div>
+    </div>
+
+    <script>
+        const items = {};
+        const itemNames = [
+            'AUCUNE FUITE',
+            'PNEUS ET ROUES',
+            'ÉCLAIRAGE',
+            'VISIBILITÉ',
+            'ÉQUIPEMENT FIXÉ',
+            'HYDRAULIQUE',
+            'CAPTEURS',
+            'LAMES ET AILES',
+            'PRESSION D\'AIR',
+            'MOTEUR',
+            'TRANSMISSION',
+            'FREINS',
+            'SÉCURITÉ'
+        ];
+
+        let currentReport = '';
+        let supervisorContact = '';
+
+        document.getElementById('currentDate').textContent = new Date().toLocaleDateString('fr-CA');
+        const now = new Date();
+        document.getElementById('time').value = now.toTimeString().slice(0,5);
+        document.getElementById('date').value = now.toISOString().split('T')[0];
+
+        function setStatus(id, status) {
+            if (!items[id]) items[id] = { status: null, comment: '', photos: [] };
+            items[id].status = status;
+            
+            const item = document.querySelector(`[data-id="${id}"]`);
+            const details = item.querySelector('.item-details');
+            const okBtn = item.querySelector('.ok-btn');
+            const issueBtn = item.querySelector('.issue-btn');
+            
+            okBtn.classList.remove('active');
+            issueBtn.classList.remove('active');
+            
+            if (status === 'ok') {
+                okBtn.classList.add('active');
+                item.classList.add('ok');
+                item.classList.remove('issue');
+                details.classList.remove('show');
+            } else {
+                issueBtn.classList.add('active');
+                item.classList.add('issue');
+                item.classList.remove('ok');
+                details.classList.add('show');
+            }
+            
+            updateSummary();
+        }
+
+        function addPhoto(id) {
+            document.getElementById(`photo-${id}`).click();
+        }
+
+        function handlePhotos(id, files) {
+            if (!items[id]) items[id] = { status: 'issue', comment: '', photos: [] };
+            
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    items[id].photos.push(e.target.result);
+                    displayPhotos(id);
+                    updateSummary();
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function displayPhotos(id) {
+            const grid = document.getElementById(`photos-${id}`);
+            grid.innerHTML = '';
+            items[id].photos.forEach((photo, i) => {
+                grid.innerHTML += `
+                    <div class="photo-item">
+                        <img src="${photo}">
+                        <button class="photo-remove" onclick="removePhoto(${id}, ${i})">×</button>
+                    </div>
+                `;
+            });
+        }
+
+        function removePhoto(id, i) {
+            items[id].photos.splice(i, 1);
+            displayPhotos(id);
+            updateSummary();
+        }
+
+        document.querySelectorAll('.comment-box').forEach(box => {
+            box.addEventListener('input', function() {
+                const id = parseInt(this.dataset.id);
+                if (!items[id]) items[id] = { status: null, comment: '', photos: [] };
+                items[id].comment = this.value;
+            });
+        });
+
+        function updateSummary() {
+            let checked = 0, ok = 0, issues = 0;
+            Object.values(items).forEach(item => {
+                if (item.status) {
+                    checked++;
+                    if (item.status === 'ok') ok++;
+                    else issues++;
+                }
+            });
+            document.getElementById('totalChecked').textContent = checked;
+            document.getElementById('totalOk').textContent = ok;
+            document.getElementById('totalIssues').textContent = issues;
+            document.getElementById('summary').classList.add('show');
+        }
+
+        function prepareReport() {
+            const vehicle = document.getElementById('vehicleNumber').value;
+            const operator = document.getElementById('operator').value;
+            supervisorContact = document.getElementById('supervisorContact').value;
+            const mileage = document.getElementById('mileage').value;
+            const date = document.getElementById('date').value;
+            const time = document.getElementById('time').value;
+            
+            if (!vehicle || !operator || !date || !supervisorContact) {
+                alert('⚠️ Veuillez remplir tous les champs obligatoires (*)');
+                return;
+            }
+
+            let checked = 0, ok = 0, issues = 0;
+            Object.values(items).forEach(item => {
+                if (item.status) {
+                    checked++;
+                    if (item.status === 'ok') ok++;
+                    else issues++;
+                }
+            });
+
+            currentReport = `📋 INSPECTION DÉNEIGEMENT
+
+Véhicule: ${vehicle}
+Opérateur: ${operator}
+${mileage ? `Kilométrage: ${mileage}` : ''}
+Date: ${date} ${time}
+
+━━━━━━━━━━━━━━━━
+RÉSUMÉ
+━━━━━━━━━━━━━━━━
+✓ Vérifiés: ${checked}
+✓ OK: ${ok}
+⚠️ Problèmes: ${issues}
+`;
+
+            if (issues > 0) {
+                currentReport += `\n━━━━━━━━━━━━━━━━\n⚠️ PROBLÈMES DÉTECTÉS\n━━━━━━━━━━━━━━━━\n\n`;
+                Object.entries(items).forEach(([id, data]) => {
+                    if (data.status === 'issue') {
+                        currentReport += `▪️ ${itemNames[id-1]}\n`;
+                        if (data.comment) currentReport += `   💬 ${data.comment}\n`;
+                        if (data.photos.length) currentReport += `   📷 ${data.photos.length} photo(s)\n`;
+                        currentReport += '\n';
+                    }
+                });
+            } else {
+                currentReport += `\n✅ TOUT CONFORME\nAucun problème détecté.\n`;
+            }
+
+            // Save to history
+            saveToHistory(vehicle, operator, mileage, date, time, ok, issues);
+
+            // Copy to clipboard
+            navigator.clipboard.writeText(currentReport).then(() => {
+                document.getElementById('reportPreview').textContent = currentReport;
+                document.getElementById('modal').classList.add('show');
+            }).catch(() => {
+                alert('Rapport prêt!\n\n' + currentReport);
+            });
+        }
+
+        function sendViaWhatsApp() {
+            const phone = supervisorContact.replace(/\D/g, '');
+            const url = phone 
+                ? `https://web.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(currentReport)}`
+                : `https://web.whatsapp.com/send?text=${encodeURIComponent(currentReport)}`;
+            window.open(url, '_blank');
+        }
+
+        function sendViaEmail() {
+            const vehicle = document.getElementById('vehicleNumber').value;
+            const subject = `Inspection ${vehicle}`;
+            const email = supervisorContact.includes('@') ? supervisorContact : '';
+            
+            if (!email) {
+                alert('⚠️ L\'email du superviseur doit contenir un @');
+                return;
+            }
+            
+            const mailtoUrl = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(currentReport)}`;
+            window.location.href = mailtoUrl;
+            
+            // Give time for email app to open
+            setTimeout(() => {
+                closeModal();
+            }, 1000);
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('show');
+            if (confirm('Voulez-vous commencer une nouvelle inspection?')) {
+                location.reload();
+            }
+        }
+
+        function saveToHistory(vehicle, operator, mileage, date, time, totalOk, totalIssues) {
+            const issuesList = [];
+            
+            Object.entries(items).forEach(([id, data]) => {
+                if (data.status === 'issue') {
+                    issuesList.push({
+                        name: itemNames[id-1],
+                        comment: data.comment,
+                        photoCount: data.photos.length
+                    });
+                }
+            });
+
+            const inspection = {
+                id: Date.now(),
+                vehicle,
+                operator,
+                mileage,
+                date,
+                time,
+                supervisorContact,
+                totalOk,
+                totalIssues,
+                issuesList,
+                fullReport: currentReport,
+                timestamp: new Date().toISOString()
+            };
+
+            let history = JSON.parse(localStorage.getItem('inspectionHistory') || '[]');
+            history.unshift(inspection);
+            
+            if (history.length > 50) {
+                history = history.slice(0, 50);
+            }
+            
+            localStorage.setItem('inspectionHistory', JSON.stringify(history));
+        }
+
+        function toggleHistory() {
+            const historySection = document.getElementById('historySection');
+            const isVisible = historySection.style.display !== 'none';
+            
+            if (isVisible) {
+                historySection.style.display = 'none';
+            } else {
+                historySection.style.display = 'block';
+                loadHistory();
+            }
+        }
+
+        function loadHistory() {
+            const history = JSON.parse(localStorage.getItem('inspectionHistory') || '[]');
+            const historyList = document.getElementById('historyList');
+            
+            if (history.length === 0) {
+                historyList.innerHTML = '<div class="empty-history">📭<br>Aucune inspection enregistrée</div>';
+                return;
+            }
+
+            historyList.innerHTML = history.map(inspection => `
+                <div class="history-item ${inspection.totalIssues > 0 ? 'has-issues' : ''}" onclick='viewInspection(${JSON.stringify(inspection).replace(/'/g, "&#39;")})'>
+                    <div class="history-header">
+                        <span class="history-vehicle">🚛 ${inspection.vehicle}</span>
+                        <span class="history-date">${inspection.date} ${inspection.time}</span>
+                    </div>
+                    <div class="history-info">👤 ${inspection.operator}</div>
+                    ${inspection.mileage ? `<div class="history-info">📏 ${inspection.mileage} km</div>` : ''}
+                    <div>
+                        <span class="history-status ${inspection.totalIssues === 0 ? 'ok' : 'issues'}">
+                            ${inspection.totalIssues === 0 ? '✅ Tout conforme' : `⚠️ ${inspection.totalIssues} problème(s)`}
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function viewInspection(inspection) {
+            document.getElementById('reportPreview').textContent = inspection.fullReport;
+            currentReport = inspection.fullReport;
+            supervisorContact = inspection.supervisorContact;
+            document.getElementById('modal').classList.add('show');
+        }
+
+        function clearHistory() {
+            if (confirm('⚠️ Voulez-vous vraiment effacer tout l\'historique?\n\nCette action est irréversible!')) {
+                localStorage.removeItem('inspectionHistory');
+                loadHistory();
+            }
+        }
+
+        function resetForm() {
+            if (confirm('Réinitialiser le formulaire?')) location.reload();
+        }
+    </script>
+</body>
+</html>
